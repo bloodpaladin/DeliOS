@@ -202,7 +202,7 @@ export async function persistImport(
           errors.push(`Business create failed for "${name}": ${error?.message}`);
           continue;
         }
-        businessId = created.id;
+        businessId = created.id as string;
         createdBusinessIds.push(businessId);
 
         // Alias from original OCR name if different
@@ -235,7 +235,7 @@ export async function persistImport(
         errors.push(`Unverified business create failed: ${error?.message}`);
         continue;
       }
-      businessId = created.id;
+      businessId = created.id as string;
       createdBusinessIds.push(businessId);
     }
 
@@ -280,6 +280,9 @@ export async function persistImport(
 
   // Mark completed/cancelled rows with events only (no stops) if desired – skipped for now
 
+  if (!runId || !importId) {
+    throw new Error('runId and importId must be set after persistence');
+  }
   return {
     runId,
     importId,

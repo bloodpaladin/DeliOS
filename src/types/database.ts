@@ -25,6 +25,8 @@ export type RunStatus = 'draft' | 'ready' | 'in_progress' | 'completed' | 'cance
 export type DeliveryStatus =
   | 'pending'
   | 'in_progress'
+  | 'navigating'
+  | 'arrived'
   | 'delivered'
   | 'failed'
   | 'skipped'
@@ -296,6 +298,9 @@ export interface Database {
         Returns: string;
       };
     };
+    Views: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }
 

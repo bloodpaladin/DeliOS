@@ -1,9 +1,12 @@
 /**
  * Supabase client – uses ONLY the publishable / anon key.
  * Never import or expose a service-role key in frontend code.
+ *
+ * Client is intentionally untyped at the createClient boundary to avoid
+ * supabase-js generic inference collapsing to `never` without generated
+ * Relationships. Application code still uses types from ../types/database.
  */
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from '../types/database';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
@@ -15,7 +18,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-export const supabase = createClient<Database>(
+export const supabase: SupabaseClient = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder-key',
   {
