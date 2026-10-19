@@ -28,3 +28,7 @@ dist-ssr
 .env.local
 .env.*.local
 node_modules.partial/
+
+.env.local.server
+.env.server
+*.server.env
