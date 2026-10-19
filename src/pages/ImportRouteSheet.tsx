@@ -362,6 +362,14 @@ export function ImportRouteSheet() {
             Confirmed businesses are in your directory. Delivery stops are ready
             for route optimization.
           </p>
+          {store.runId && (
+            <a
+              href={`/run/${store.runId}`}
+              className="block w-full rounded-xl bg-emerald-600 py-4 text-base font-semibold"
+            >
+              Open active delivery
+            </a>
+          )}
           <button
             type="button"
             className="rounded-xl bg-slate-700 px-6 py-3"
