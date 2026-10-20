@@ -1,19 +1,14 @@
-import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import ImportRouteSheet from './pages/ImportRouteSheet';
 import ActiveDelivery from './pages/ActiveDelivery';
 import AuthPage from './pages/AuthPage';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { ProtectedRoute } from './auth/ProtectedRoute';
+import { LogoutButton } from './components/LogoutButton';
 import './App.css';
 
 function Dashboard() {
-  const { status, user, signOut } = useAuth();
-  const navigate = useNavigate();
-
-  async function onSignOut() {
-    await signOut();
-    navigate('/sign-in', { replace: true });
-  }
+  const { status, user } = useAuth();
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 space-y-4">
@@ -25,17 +20,11 @@ function Dashboard() {
           </p>
         </div>
         {status === 'authenticated' && user ? (
-          <div className="text-right shrink-0">
+          <div className="text-right shrink-0 space-y-2">
             <div className="text-xs text-slate-400 truncate max-w-[10rem]">
               {user.email}
             </div>
-            <button
-              type="button"
-              onClick={onSignOut}
-              className="mt-1 text-xs text-slate-300 underline"
-            >
-              Sign out
-            </button>
+            <LogoutButton compact />
           </div>
         ) : status === 'loading' ? (
           <span className="text-xs text-slate-500">…</span>

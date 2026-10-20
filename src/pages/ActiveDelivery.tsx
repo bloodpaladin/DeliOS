@@ -11,6 +11,7 @@ import {
   openExternalNav,
 } from '../services/navigation';
 import { manualPinPosition } from '../services/geolocation';
+import { LogoutButton } from '../components/LogoutButton';
 
 function formatKm(m: number): string {
   if (!m) return '—';
@@ -83,9 +84,12 @@ export function ActiveDelivery() {
               delivered
             </p>
           </div>
-          <Link to="/" className="text-xs text-slate-400 px-2 py-1">
-            Home
-          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link to="/" className="text-xs text-slate-400 px-2 py-1">
+              Home
+            </Link>
+            <LogoutButton compact />
+          </div>
         </div>
       </header>
 
