@@ -1,12 +1,11 @@
 /**
- * Shared logout control — signs out via Supabase Auth and returns to sign-in.
+ * Shared logout — Supabase Auth signOut only.
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
 type Props = {
-  /** Compact style for dense headers */
   compact?: boolean;
   className?: string;
 };
@@ -23,10 +22,7 @@ export function LogoutButton({ compact = false, className = '' }: Props) {
     setBusy(true);
     const { error } = await signOut();
     setBusy(false);
-    if (error) {
-      // Still leave protected areas if session is unclear
-      console.warn('[auth] signOut:', error);
-    }
+    if (error) console.warn('[auth] signOut:', error);
     navigate('/sign-in', { replace: true });
   }
 
@@ -37,10 +33,9 @@ export function LogoutButton({ compact = false, className = '' }: Props) {
       disabled={busy}
       className={
         className ||
-        (compact
-          ? 'rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-100 disabled:opacity-50'
-          : 'rounded-xl bg-slate-700 px-4 py-2 text-sm font-medium text-slate-100 disabled:opacity-50')
+        `rp-btn rp-btn-ghost ${compact ? 'rp-btn-sm' : ''}`
       }
+      aria-label="Log out"
     >
       {busy ? 'Signing out…' : 'Log out'}
     </button>

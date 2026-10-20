@@ -1,82 +1,287 @@
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import ImportRouteSheet from './pages/ImportRouteSheet';
 import ActiveDelivery from './pages/ActiveDelivery';
 import AuthPage from './pages/AuthPage';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { LogoutButton } from './components/LogoutButton';
+import { supabase } from './lib/supabase';
 import './App.css';
+
+type RecentRun = {
+  id: string;
+  run_name: string | null;
+  run_status: string;
+  created_at: string;
+  remaining?: number;
+  completed?: number;
+};
 
 function Dashboard() {
   const { status, user } = useAuth();
+  const navigate = useNavigate();
+  const [recent, setRecent] = useState<RecentRun[]>([]);
+  const [activeRun, setActiveRun] = useState<RecentRun | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadingRuns, setLoadingRuns] = useState(false);
+
+  useEffect(() => {
+    if (status !== 'authenticated' || !user) {
+      setRecent([]);
+      setActiveRun(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setLoadingRuns(true);
+      setLoadError(null);
+      try {
+        const { data: runs, error } = await supabase
+          .from('delivery_runs')
+          .select('id, run_name, run_status, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(8);
+        if (error) throw error;
+        if (cancelled) return;
+
+        const enriched: RecentRun[] = [];
+        for (const r of runs ?? []) {
+          const { data: stops } = await supabase
+            .from('delivery_stops')
+            .select('delivery_status')
+            .eq('delivery_run_id', r.id);
+          const list = stops ?? [];
+          const completed = list.filter((s) => s.delivery_status === 'delivered').length;
+          const remaining = list.filter((s) =>
+            ['pending', 'navigating', 'arrived', 'skipped', 'failed'].includes(
+              s.delivery_status
+            )
+          ).length;
+          enriched.push({
+            ...r,
+            completed,
+            remaining,
+          });
+        }
+        if (cancelled) return;
+        setRecent(enriched);
+        const unfinished = enriched.find(
+          (r) =>
+            r.run_status !== 'completed' &&
+            r.run_status !== 'cancelled' &&
+            (r.remaining ?? 0) > 0
+        );
+        setActiveRun(unfinished ?? null);
+      } catch (e) {
+        if (!cancelled) {
+          setLoadError(
+            e instanceof Error
+              ? e.message
+              : 'Could not load runs. Check connection or database setup.'
+          );
+        }
+      } finally {
+        if (!cancelled) setLoadingRuns(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [status, user]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold mb-1">RoutePilot Caribbean</h1>
-          <p className="text-sm text-slate-400">
-            Delivery route optimizer for Trinidad &amp; Tobago
-          </p>
+    <div className="rp-page">
+      <header className="rp-topbar">
+        <div className="rp-brand">
+          <span className="rp-brand-mark">Trinidad &amp; Tobago</span>
+          <h1 className="rp-brand-name">RoutePilot Caribbean</h1>
         </div>
         {status === 'authenticated' && user ? (
-          <div className="text-right shrink-0 space-y-2">
-            <div className="text-xs text-slate-400 truncate max-w-[10rem]">
+          <div className="rp-row" style={{ justifyContent: 'flex-end' }}>
+            <span
+              className="rp-hint"
+              style={{ maxWidth: '7.5rem', overflow: 'hidden', textOverflow: 'ellipsis' }}
+              title={user.email ?? undefined}
+            >
               {user.email}
-            </div>
+            </span>
             <LogoutButton compact />
           </div>
         ) : status === 'loading' ? (
-          <span className="text-xs text-slate-500">…</span>
+          <span className="rp-hint">…</span>
         ) : (
-          <Link to="/sign-in" className="text-sm text-emerald-400 font-medium">
+          <Link to="/sign-in" className="rp-btn rp-btn-primary rp-btn-sm">
             Sign in
           </Link>
         )}
+      </header>
+
+      <div className="rp-shell rp-stack">
+        {status === 'loading' && (
+          <p className="rp-muted animate-pulse">Checking session…</p>
+        )}
+
+        {status === 'unauthenticated' && (
+          <section className="rp-card rp-card-elevated rp-stack">
+            <h2 className="rp-topbar-title" style={{ margin: 0 }}>
+              Deliver with clarity
+            </h2>
+            <p className="rp-muted" style={{ margin: 0 }}>
+              Import a printed route sheet, confirm stops, then work through
+              mini-mart deliveries across Trinidad and Tobago—one clear next
+              step at a time.
+            </p>
+            <Link to="/sign-in" className="rp-btn rp-btn-primary rp-btn-lg rp-btn-block">
+              Sign in to continue
+            </Link>
+            <p className="rp-hint" style={{ margin: 0, textAlign: 'center' }}>
+              Accounts use Supabase Auth. Your runs stay private to your user.
+            </p>
+          </section>
+        )}
+
+        {status === 'authenticated' && (
+          <>
+            {/* Primary next action */}
+            <section className="rp-stack">
+              <p className="rp-section-title">What to do next</p>
+              {activeRun ? (
+                <div className="rp-card rp-card-elevated rp-stack">
+                  <div>
+                    <StatusLine
+                      label="Active run"
+                      value={activeRun.run_name || 'Delivery run'}
+                    />
+                    <p className="rp-muted" style={{ margin: '0.35rem 0 0' }}>
+                      {activeRun.remaining ?? '—'} remaining ·{' '}
+                      {activeRun.completed ?? 0} delivered
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="rp-btn rp-btn-primary rp-btn-lg rp-btn-block"
+                    onClick={() => navigate(`/run/${activeRun.id}`)}
+                  >
+                    Resume active run
+                  </button>
+                  <Link
+                    to="/import"
+                    className="rp-btn rp-btn-secondary rp-btn-block"
+                  >
+                    Import another route sheet
+                  </Link>
+                </div>
+              ) : (
+                <div className="rp-card rp-card-elevated rp-stack">
+                  <p className="rp-muted" style={{ margin: 0 }}>
+                    Start by photographing or uploading your printed delivery
+                    list. Review every stop before you drive.
+                  </p>
+                  <Link
+                    to="/import"
+                    className="rp-btn rp-btn-primary rp-btn-lg rp-btn-block"
+                  >
+                    Import route sheet
+                  </Link>
+                </div>
+              )}
+            </section>
+
+            {loadError && (
+              <div className="rp-alert rp-alert-warn" role="status">
+                {loadError}
+                <div className="rp-hint" style={{ marginTop: '0.35rem' }}>
+                  If tables are missing, apply Supabase migrations. Map and OCR
+                  features need their keys configured separately.
+                </div>
+              </div>
+            )}
+
+            <section className="rp-section">
+              <p className="rp-section-title">Recent runs</p>
+              {loadingRuns && (
+                <p className="rp-muted animate-pulse">Loading runs…</p>
+              )}
+              {!loadingRuns && recent.length === 0 && !loadError && (
+                <div className="rp-empty rp-card">
+                  <strong>No runs yet</strong>
+                  Import a route sheet to create your first delivery run.
+                </div>
+              )}
+              <div className="rp-stack-sm">
+                {recent.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    className="rp-stop"
+                    onClick={() => navigate(`/run/${r.id}`)}
+                  >
+                    <div className="rp-stop-body">
+                      <p className="rp-stop-name">
+                        {r.run_name || 'Delivery run'}
+                      </p>
+                      <p className="rp-stop-addr">
+                        {r.completed ?? 0} delivered · {r.remaining ?? 0}{' '}
+                        remaining · {formatDate(r.created_at)}
+                      </p>
+                    </div>
+                    <span className="rp-badge rp-badge-pending">
+                      {r.run_status}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <details className="rp-card">
+              <summary className="rp-hint" style={{ cursor: 'pointer' }}>
+                Advanced: open run by ID
+              </summary>
+              <RunIdOpener />
+            </details>
+          </>
+        )}
+
+        <p className="rp-hint" style={{ textAlign: 'center' }}>
+          Park safely before using the app. Navigation opens in Waze or Google
+          Maps—turn-by-turn is handled there, not in RoutePilot.
+        </p>
       </div>
-
-      {status === 'authenticated' ? (
-        <>
-          <Link
-            to="/import"
-            className="block w-full rounded-xl bg-emerald-600 py-4 text-center font-medium"
-          >
-            Import route sheet
-          </Link>
-          <p className="text-xs text-slate-500 pt-2">
-            After saving a run from import, open it with the run id:
-          </p>
-          <RunIdOpener />
-        </>
-      ) : status === 'unauthenticated' ? (
-        <div className="rounded-xl border border-slate-700 bg-slate-900 p-4 space-y-3">
-          <p className="text-sm text-slate-300">
-            Sign in to import route sheets and manage your deliveries. Data is
-            protected per driver account.
-          </p>
-          <Link
-            to="/sign-in"
-            className="block w-full rounded-xl bg-emerald-600 py-4 text-center font-medium"
-          >
-            Sign in or create account
-          </Link>
-        </div>
-      ) : (
-        <p className="text-sm text-slate-500 animate-pulse">Checking session…</p>
-      )}
-
-      <p className="mt-4 text-xs text-slate-500">
-        Routing uses Google Routes API when configured. Waze / Google Maps open
-        as separate navigation hand-offs.
-      </p>
     </div>
   );
+}
+
+function StatusLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="rp-section-title" style={{ marginBottom: 0 }}>
+        {label}
+      </div>
+      <div style={{ fontWeight: 600, fontSize: '1.05rem' }}>{value}</div>
+    </div>
+  );
+}
+
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return '';
+  }
 }
 
 function RunIdOpener() {
   return (
     <form
-      className="flex gap-2"
+      className="rp-stack-sm"
+      style={{ marginTop: '0.75rem' }}
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -84,15 +289,16 @@ function RunIdOpener() {
         if (id) window.location.href = `/run/${id}`;
       }}
     >
-      <input
-        name="runId"
-        className="flex-1 rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-sm"
-        placeholder="delivery_runs UUID"
-      />
-      <button
-        type="submit"
-        className="rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium"
-      >
+      <label className="auth-field">
+        <span className="auth-label">Run UUID</span>
+        <input
+          name="runId"
+          className="auth-input"
+          placeholder="Paste run id only if needed"
+          autoComplete="off"
+        />
+      </label>
+      <button type="submit" className="rp-btn rp-btn-secondary rp-btn-block">
         Open run
       </button>
     </form>

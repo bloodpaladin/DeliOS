@@ -13,6 +13,7 @@ import {
 import { manualPinPosition } from '../services/geolocation';
 import { LogoutButton } from '../components/LogoutButton';
 import { BackButton } from '../components/BackButton';
+import { StatusBadge } from '../components/StatusBadge';
 
 function formatKm(m: number): string {
   if (!m) return '—';
@@ -72,33 +73,36 @@ export function ActiveDelivery() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-32">
-      <header className="sticky top-0 z-20 bg-slate-900/95 border-b border-slate-800 px-4 py-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3 min-w-0">
-            <BackButton fallback="/" />
-            <div className="min-w-0">
-              <h1 className="text-lg font-semibold truncate">
-                {store.run?.run_name || 'Delivery run'}
-              </h1>
-              <p className="text-xs text-slate-400">
-                {pending.length} remaining ·{' '}
-                {store.stops.filter((s) => s.delivery_status === 'delivered').length}{' '}
-                delivered
-              </p>
-            </div>
+    <div className="rp-page">
+      <header className="rp-topbar">
+        <div className="flex items-center gap-3 min-w-0">
+          <BackButton fallback="/" />
+          <div className="min-w-0">
+            <h1 className="rp-topbar-title truncate">
+              {store.run?.run_name || 'Delivery run'}
+            </h1>
+            <p className="rp-topbar-sub">
+              {pending.length} remaining ·{' '}
+              {store.stops.filter((s) => s.delivery_status === 'delivered').length}{' '}
+              delivered
+            </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Link to="/" className="text-xs text-slate-400 px-2 py-1">
-              Home
-            </Link>
-            <LogoutButton compact />
-          </div>
+        </div>
+        <div className="rp-row shrink-0">
+          <Link to="/" className="rp-btn rp-btn-ghost rp-btn-sm">
+            Home
+          </Link>
+          <LogoutButton compact />
         </div>
       </header>
 
+      <div className="rp-shell" style={{ paddingTop: '0.75rem' }}>
+      <div className="rp-driving-banner" role="note">
+        Park safely before using the app. Use Waze or Google Maps for turn-by-turn while driving.
+      </div>
+
       {store.error && (
-        <div className="mx-4 mt-3 rounded-lg bg-red-950/80 border border-red-800 px-3 py-2 text-sm text-red-200">
+        <div className="rp-alert rp-alert-error" role="alert">
           {store.error}
         </div>
       )}
@@ -156,7 +160,7 @@ export function ActiveDelivery() {
         <button
           type="button"
           disabled={store.isOptimizing || !store.startPosition}
-          className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold disabled:opacity-50"
+          className="rp-btn rp-btn-primary rp-btn-block" 
           onClick={() => store.optimize({ force: true })}
         >
           {store.isOptimizing ? 'Optimizing…' : 'Optimize remaining route'}
@@ -200,7 +204,7 @@ export function ActiveDelivery() {
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              className="rounded-xl bg-sky-600 py-4 text-sm font-semibold"
+              className="rp-btn rp-btn-sky rp-btn-lg rp-btn-block"
               onClick={() => {
                 store.markStatus(active.id, 'navigating');
                 openExternalNav(buildWazeUrl(target));
@@ -210,7 +214,7 @@ export function ActiveDelivery() {
             </button>
             <button
               type="button"
-              className="rounded-xl bg-slate-600 py-4 text-sm font-semibold"
+              className="rp-btn rp-btn-secondary rp-btn-lg rp-btn-block"
               onClick={() => {
                 store.markStatus(active.id, 'navigating');
                 openExternalNav(buildGoogleMapsNavUrl(target));
@@ -227,7 +231,7 @@ export function ActiveDelivery() {
           {!confirmDeliver ? (
             <button
               type="button"
-              className="w-full rounded-xl bg-emerald-600 py-4 text-base font-semibold"
+              className="rp-btn rp-btn-primary rp-btn-lg rp-btn-block"
               onClick={() => setConfirmDeliver(true)}
             >
               Mark Delivered
@@ -236,7 +240,7 @@ export function ActiveDelivery() {
             <div className="flex gap-2">
               <button
                 type="button"
-                className="flex-1 rounded-xl bg-emerald-600 py-4 font-semibold"
+                className="rp-btn rp-btn-primary rp-btn-lg" style={{ flex: 1 }}
                 disabled={store.isPersisting}
                 onClick={async () => {
                   await store.markStatus(active.id, 'delivered', {
@@ -355,15 +359,17 @@ export function ActiveDelivery() {
                   <div className="text-xs text-slate-500 truncate">
                     {s.business?.normalized_address || s.address_raw}
                   </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">
-                    {s.delivery_status}
-                    {s.business?.verification_status
-                      ? ` · ${s.business.verification_status}`
-                      : ''}
-                    {skipped ? ' · still outstanding' : ''}
-                    {failed && s.failure_reason
-                      ? ` · ${s.failure_reason}`
-                      : ''}
+                  <div className="rp-row" style={{ marginTop: '0.35rem', gap: '0.35rem' }}>
+                    <StatusBadge status={s.delivery_status} />
+                    {s.business?.verification_status && (
+                      <StatusBadge status={s.business.verification_status} />
+                    )}
+                    {skipped && (
+                      <span className="rp-hint">Still outstanding</span>
+                    )}
+                    {failed && s.failure_reason && (
+                      <span className="rp-hint">{s.failure_reason}</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -400,10 +406,10 @@ export function ActiveDelivery() {
           )}
         </div>
         <p className="text-[11px] text-slate-500 mt-2">
-          Interactive Google Map tiles require Maps JavaScript API on the key.
-          Route geometry comes from the Routes API when optimize succeeds.
+          Map tiles need a Google Maps JavaScript API key. Until configured, use this coordinate list. Route order uses the Routes API only when optimization succeeds with a valid key.
         </p>
       </section>
+      </div>
     </div>
   );
 }

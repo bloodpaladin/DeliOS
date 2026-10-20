@@ -150,20 +150,18 @@ export function ImportRouteSheet() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-24">
-      <header className="sticky top-0 z-20 bg-slate-900/95 border-b border-slate-800 px-4 py-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 min-w-0">
-            <BackButton fallback="/" />
-            <div className="min-w-0">
-              <h1 className="text-lg font-semibold tracking-tight">Import route sheet</h1>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Step: <span className="text-emerald-400">{store.step}</span>
-              </p>
-            </div>
+    <div className="rp-page">
+      <header className="rp-topbar">
+        <div className="flex items-center gap-3 min-w-0">
+          <BackButton fallback="/" />
+          <div className="min-w-0">
+            <h1 className="rp-topbar-title">Import route sheet</h1>
+            <p className="rp-topbar-sub">
+              Step: <strong style={{ color: '#6ee7b7' }}>{store.step}</strong>
+            </p>
           </div>
-          <LogoutButton compact />
         </div>
+        <LogoutButton compact />
       </header>
 
       {(store.errorMessage || statusMsg) && (
@@ -190,14 +188,14 @@ export function ImportRouteSheet() {
           <div className="flex gap-3">
             <button
               type="button"
-              className="flex-1 rounded-xl bg-emerald-600 active:bg-emerald-700 py-4 text-base font-medium"
+              className="rp-btn rp-btn-primary" style={{ flex: 1 }}
               onClick={() => cameraRef.current?.click()}
             >
               Take photo
             </button>
             <button
               type="button"
-              className="flex-1 rounded-xl bg-slate-700 active:bg-slate-600 py-4 text-base font-medium"
+              className="rp-btn rp-btn-secondary" style={{ flex: 1 }}
               onClick={() => fileRef.current?.click()}
             >
               Upload
@@ -263,7 +261,7 @@ export function ImportRouteSheet() {
               <button
                 type="button"
                 disabled={store.isProcessing}
-                className="w-full rounded-xl bg-emerald-600 py-4 text-base font-semibold disabled:opacity-50"
+                className="rp-btn rp-btn-primary rp-btn-lg rp-btn-block"
                 onClick={runOcr}
               >
                 {store.isProcessing ? 'Processing…' : 'Extract customers (OCR)'}
@@ -305,7 +303,7 @@ export function ImportRouteSheet() {
 
           <button
             type="button"
-            className="w-full rounded-xl bg-emerald-600 py-4 text-base font-semibold"
+            className="rp-btn rp-btn-primary rp-btn-lg rp-btn-block"
             onClick={runGeocodeForActiveRows}
           >
             Verify addresses on map
@@ -356,7 +354,7 @@ export function ImportRouteSheet() {
           <button
             type="button"
             disabled={store.isProcessing}
-            className="w-full rounded-xl bg-emerald-600 py-4 text-base font-semibold disabled:opacity-50"
+            className="rp-btn rp-btn-primary rp-btn-lg rp-btn-block"
             onClick={saveAll}
           >
             {store.isProcessing ? 'Saving…' : 'Save run & locations'}

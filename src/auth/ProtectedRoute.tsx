@@ -12,8 +12,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-300 flex items-center justify-center p-4">
-        <p className="text-sm animate-pulse">Checking session…</p>
+      <div className="rp-page" style={{ justifyContent: 'center', alignItems: 'center' }}>
+        <p className="rp-muted animate-pulse">Checking session…</p>
       </div>
     );
   }
