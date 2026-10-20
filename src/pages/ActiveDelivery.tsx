@@ -12,6 +12,7 @@ import {
 } from '../services/navigation';
 import { manualPinPosition } from '../services/geolocation';
 import { LogoutButton } from '../components/LogoutButton';
+import { BackButton } from '../components/BackButton';
 
 function formatKm(m: number): string {
   if (!m) return '—';
@@ -74,15 +75,18 @@ export function ActiveDelivery() {
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-32">
       <header className="sticky top-0 z-20 bg-slate-900/95 border-b border-slate-800 px-4 py-3">
         <div className="flex items-center justify-between gap-2">
-          <div>
-            <h1 className="text-lg font-semibold">
-              {store.run?.run_name || 'Delivery run'}
-            </h1>
-            <p className="text-xs text-slate-400">
-              {pending.length} remaining ·{' '}
-              {store.stops.filter((s) => s.delivery_status === 'delivered').length}{' '}
-              delivered
-            </p>
+          <div className="flex items-center gap-3 min-w-0">
+            <BackButton fallback="/" />
+            <div className="min-w-0">
+              <h1 className="text-lg font-semibold truncate">
+                {store.run?.run_name || 'Delivery run'}
+              </h1>
+              <p className="text-xs text-slate-400">
+                {pending.length} remaining ·{' '}
+                {store.stops.filter((s) => s.delivery_status === 'delivered').length}{' '}
+                delivered
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Link to="/" className="text-xs text-slate-400 px-2 py-1">

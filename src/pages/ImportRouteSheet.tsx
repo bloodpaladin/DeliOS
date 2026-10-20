@@ -9,6 +9,7 @@ import { findDirectoryMatches } from '../services/duplicates';
 import { persistImport } from '../services/importPersistence';
 import type { RowReviewDecision } from '../types/ocr';
 import { LogoutButton } from '../components/LogoutButton';
+import { BackButton } from '../components/BackButton';
 
 export function ImportRouteSheet() {
   const store = useImportStore();
@@ -152,11 +153,14 @@ export function ImportRouteSheet() {
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-24">
       <header className="sticky top-0 z-20 bg-slate-900/95 border-b border-slate-800 px-4 py-3">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight">Import route sheet</h1>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Step: <span className="text-emerald-400">{store.step}</span>
-            </p>
+          <div className="flex items-start gap-3 min-w-0">
+            <BackButton fallback="/" />
+            <div className="min-w-0">
+              <h1 className="text-lg font-semibold tracking-tight">Import route sheet</h1>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Step: <span className="text-emerald-400">{store.step}</span>
+              </p>
+            </div>
           </div>
           <LogoutButton compact />
         </div>

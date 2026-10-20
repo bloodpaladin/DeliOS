@@ -2,9 +2,10 @@
  * Sign-in / create-account screen for drivers.
  */
 import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { safeRedirectPath } from '../auth/safeRedirect';
+import { BackButton } from '../components/BackButton';
 
 type Mode = 'sign-in' | 'sign-up';
 
@@ -87,14 +88,14 @@ export function AuthPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <header className="px-4 py-4 border-b border-slate-800">
-        <Link to="/" className="text-sm text-slate-400">
-          ← RoutePilot Caribbean
-        </Link>
-        <h1 className="text-lg font-semibold mt-2">
+        <div className="flex items-center gap-3">
+          <BackButton fallback="/" label="Home" />
+        </div>
+        <h1 className="text-lg font-semibold mt-3">
           {mode === 'sign-in' ? 'Driver sign in' : 'Create driver account'}
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Your deliveries are private to your account (RLS).
+          Sign in with your Supabase account. Deliveries stay private to your user (RLS).
         </p>
       </header>
 
