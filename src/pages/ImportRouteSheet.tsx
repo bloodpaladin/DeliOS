@@ -9,6 +9,7 @@ import { findDirectoryMatches } from '../services/duplicates';
 import { persistImport } from '../services/importPersistence';
 import type { RowReviewDecision } from '../types/ocr';
 import { LogoutButton } from '../components/LogoutButton';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { BackButton } from '../components/BackButton';
 
 export function ImportRouteSheet() {
@@ -161,6 +162,7 @@ export function ImportRouteSheet() {
             </p>
           </div>
         </div>
+        <ThemeToggle />
         <LogoutButton compact />
       </header>
 

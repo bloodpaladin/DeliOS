@@ -6,6 +6,7 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { safeRedirectPath } from '../auth/safeRedirect';
 import { BackButton } from '../components/BackButton';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { evaluatePasswordStrength } from '../auth/passwordStrength';
 
 type Mode = 'sign-in' | 'sign-up';
@@ -99,7 +100,10 @@ export function AuthPage() {
   return (
     <div className="auth-page">
       <header className="auth-header">
-        <BackButton fallback="/" label="Home" />
+        <div className="rp-row" style={{ justifyContent: 'space-between' }}>
+          <BackButton fallback="/" label="Home" />
+          <ThemeToggle />
+        </div>
         <h1 className="auth-title">
           {mode === 'sign-in' ? 'Driver sign in' : 'Create driver account'}
         </h1>

@@ -6,6 +6,8 @@ import AuthPage from './pages/AuthPage';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { LogoutButton } from './components/LogoutButton';
+import { ThemeToggle } from './components/ThemeToggle';
+import { ThemeProvider } from './theme/ThemeContext';
 import { supabase } from './lib/supabase';
 import './App.css';
 
@@ -98,24 +100,27 @@ function Dashboard() {
           <span className="rp-brand-mark">Trinidad &amp; Tobago</span>
           <h1 className="rp-brand-name">RoutePilot Caribbean</h1>
         </div>
-        {status === 'authenticated' && user ? (
-          <div className="rp-row" style={{ justifyContent: 'flex-end' }}>
-            <span
-              className="rp-hint"
-              style={{ maxWidth: '7.5rem', overflow: 'hidden', textOverflow: 'ellipsis' }}
-              title={user.email ?? undefined}
-            >
-              {user.email}
-            </span>
-            <LogoutButton compact />
-          </div>
-        ) : status === 'loading' ? (
-          <span className="rp-hint">…</span>
-        ) : (
-          <Link to="/sign-in" className="rp-btn rp-btn-primary rp-btn-sm">
-            Sign in
-          </Link>
-        )}
+        <div className="rp-row" style={{ justifyContent: 'flex-end' }}>
+          <ThemeToggle />
+          {status === 'authenticated' && user ? (
+            <>
+              <span
+                className="rp-hint"
+                style={{ maxWidth: '7.5rem', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                title={user.email ?? undefined}
+              >
+                {user.email}
+              </span>
+              <LogoutButton compact />
+            </>
+          ) : status === 'loading' ? (
+            <span className="rp-hint">…</span>
+          ) : (
+            <Link to="/sign-in" className="rp-btn rp-btn-primary rp-btn-sm">
+              Sign in
+            </Link>
+          )}
+        </div>
       </header>
 
       <div className="rp-shell rp-stack">
@@ -333,10 +338,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }

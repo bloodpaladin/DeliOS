@@ -12,6 +12,7 @@ import {
 } from '../services/navigation';
 import { manualPinPosition } from '../services/geolocation';
 import { LogoutButton } from '../components/LogoutButton';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { BackButton } from '../components/BackButton';
 import { StatusBadge } from '../components/StatusBadge';
 
@@ -92,7 +93,8 @@ export function ActiveDelivery() {
           <Link to="/" className="rp-btn rp-btn-ghost rp-btn-sm">
             Home
           </Link>
-          <LogoutButton compact />
+          <ThemeToggle />
+        <LogoutButton compact />
         </div>
       </header>
 
