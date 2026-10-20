@@ -1,5 +1,5 @@
 /**
- * Sign-in / create-account screen for drivers.
+ * Sign-in / create-account screen for drivers (Supabase Auth only).
  */
 import { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
@@ -25,8 +25,8 @@ export function AuthPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-300 flex items-center justify-center">
-        <p className="text-sm animate-pulse">Loading…</p>
+      <div className="auth-page">
+        <p className="auth-muted animate-pulse">Loading…</p>
       </div>
     );
   }
@@ -64,7 +64,7 @@ export function AuthPage() {
       }
       if (result.needsEmailConfirmation) {
         setInfo(
-          'Account created. Check your email for a confirmation link before signing in. If no email arrives, ask your admin to disable email confirmation for this project or resend from the dashboard.'
+          'Account created. Check your email for a confirmation link before signing in.'
         );
         setMode('sign-in');
         setPassword('');
@@ -85,101 +85,148 @@ export function AuthPage() {
     navigate(redirectTo, { replace: true });
   }
 
+  function switchMode() {
+    setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in');
+    setError(null);
+    setInfo(null);
+  }
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      <header className="px-4 py-4 border-b border-slate-800">
-        <div className="flex items-center gap-3">
-          <BackButton fallback="/" label="Home" />
-        </div>
-        <h1 className="text-lg font-semibold mt-3">
+    <div className="auth-page">
+      <header className="auth-header">
+        <BackButton fallback="/" label="Home" />
+        <h1 className="auth-title">
           {mode === 'sign-in' ? 'Driver sign in' : 'Create driver account'}
         </h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Sign in with your Supabase account. Deliveries stay private to your user (RLS).
+        <p className="auth-subtitle">
+          Use your Supabase email and password. Your deliveries stay private to
+          your account.
         </p>
       </header>
 
-      <main className="flex-1 p-4 max-w-md w-full mx-auto">
-        <form onSubmit={onSubmit} className="space-y-4">
-          <label className="block space-y-1">
-            <span className="text-xs text-slate-400">Email</span>
-            <input
-              type="email"
-              autoComplete="email"
-              className="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-3 text-sm"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </label>
-
-          <label className="block space-y-1">
-            <span className="text-xs text-slate-400">Password</span>
-            <input
-              type="password"
-              autoComplete={
-                mode === 'sign-in' ? 'current-password' : 'new-password'
+      <main className="auth-main">
+        <div className="auth-card">
+          <div className="auth-tabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'sign-in'}
+              className={
+                mode === 'sign-in' ? 'auth-tab auth-tab-active' : 'auth-tab'
               }
-              className="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-3 text-sm"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-            />
-          </label>
+              onClick={() => {
+                setMode('sign-in');
+                setError(null);
+                setInfo(null);
+              }}
+            >
+              Sign in
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'sign-up'}
+              className={
+                mode === 'sign-up' ? 'auth-tab auth-tab-active' : 'auth-tab'
+              }
+              onClick={() => {
+                setMode('sign-up');
+                setError(null);
+                setInfo(null);
+              }}
+            >
+              Create account
+            </button>
+          </div>
 
-          {mode === 'sign-up' && (
-            <label className="block space-y-1">
-              <span className="text-xs text-slate-400">Confirm password</span>
+          <form className="auth-form" onSubmit={onSubmit} noValidate>
+            <label className="auth-field">
+              <span className="auth-label">Email</span>
               <input
+                className="auth-input"
+                type="email"
+                name="email"
+                autoComplete="email"
+                inputMode="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="driver@example.com"
+                required
+              />
+            </label>
+
+            <label className="auth-field">
+              <span className="auth-label">Password</span>
+              <input
+                className="auth-input"
                 type="password"
-                autoComplete="new-password"
-                className="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-3 text-sm"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
+                name="password"
+                autoComplete={
+                  mode === 'sign-in' ? 'current-password' : 'new-password'
+                }
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 6 characters"
                 required
                 minLength={6}
               />
             </label>
-          )}
 
-          {error && (
-            <div className="rounded-lg bg-red-950/80 border border-red-800 px-3 py-2 text-sm text-red-200">
-              {error}
-            </div>
-          )}
-          {info && (
-            <div className="rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-sm text-slate-200">
-              {info}
-            </div>
-          )}
+            {mode === 'sign-up' && (
+              <label className="auth-field">
+                <span className="auth-label">Confirm password</span>
+                <input
+                  className="auth-input"
+                  type="password"
+                  name="confirm"
+                  autoComplete="new-password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  placeholder="Repeat password"
+                  required
+                  minLength={6}
+                />
+              </label>
+            )}
 
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full rounded-xl bg-emerald-600 py-4 text-base font-semibold disabled:opacity-50"
-          >
-            {busy
-              ? 'Please wait…'
-              : mode === 'sign-in'
-                ? 'Sign in'
-                : 'Create account'}
-          </button>
-        </form>
+            {error && (
+              <div className="auth-alert auth-alert-error" role="alert">
+                {error}
+              </div>
+            )}
+            {info && (
+              <div className="auth-alert auth-alert-info" role="status">
+                {info}
+              </div>
+            )}
 
-        <button
-          type="button"
-          className="mt-4 w-full text-sm text-slate-400 underline"
-          onClick={() => {
-            setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in');
-            setError(null);
-            setInfo(null);
-          }}
-        >
-          {mode === 'sign-in'
-            ? 'Need an account? Create one'
-            : 'Already have an account? Sign in'}
-        </button>
+            <button type="submit" className="auth-submit" disabled={busy}>
+              {busy
+                ? 'Please wait…'
+                : mode === 'sign-in'
+                  ? 'Sign in'
+                  : 'Create account'}
+            </button>
+          </form>
+
+          <p className="auth-switch">
+            {mode === 'sign-in' ? (
+              <>
+                Need an account?{' '}
+                <button type="button" className="auth-link" onClick={switchMode}>
+                  Create one
+                </button>
+              </>
+            ) : (
+              <>
+                Already registered?{' '}
+                <button type="button" className="auth-link" onClick={switchMode}>
+                  Sign in
+                </button>
+              </>
+            )}
+          </p>
+        </div>
       </main>
     </div>
   );
