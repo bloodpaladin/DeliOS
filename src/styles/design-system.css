@@ -570,3 +570,12 @@ html[data-theme='light'] .pwd-strength-bar {
     display: none;
   }
 }
+
+.theme-toggle {
+  gap: 0.35rem;
+  min-width: var(--rp-touch);
+}
+.theme-toggle-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+}

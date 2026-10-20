@@ -37,15 +37,11 @@ export function ActiveDelivery() {
   const [manualLat, setManualLat] = useState('');
   const [manualLng, setManualLng] = useState('');
 
+  const loadRun = store.loadRun;
   useEffect(() => {
-    if (runId) {
-      store.loadRun(runId);
-    }
-    return () => {
-      /* keep state for resume */
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [runId]);
+    if (!runId) return;
+    void loadRun(runId);
+  }, [runId, loadRun]);
 
   const active = store.stops.find((s) => s.id === store.activeStopId);
   const target = store.getNavigationTarget();
@@ -245,8 +241,9 @@ export function ActiveDelivery() {
                 className="rp-btn rp-btn-primary rp-btn-lg" style={{ flex: 1 }}
                 disabled={store.isPersisting}
                 onClick={async () => {
+                  // Stable key so double-taps do not create duplicate completion events
                   await store.markStatus(active.id, 'delivered', {
-                    idempotencySuffix: `tap-${Date.now()}`,
+                    idempotencySuffix: 'confirm-v1',
                   });
                   setConfirmDeliver(false);
                 }}

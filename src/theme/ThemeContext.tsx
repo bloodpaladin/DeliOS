@@ -1,5 +1,5 @@
 /**
- * Light / dark theme — persisted in localStorage, defaults to system preference.
+ * Light / dark theme — optional localStorage preference; defaults to system.
  */
 import {
   createContext,
@@ -35,6 +35,18 @@ function readStored(): ThemeMode | null {
 function applyDomTheme(mode: ThemeMode) {
   document.documentElement.setAttribute('data-theme', mode);
   document.documentElement.style.colorScheme = mode;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) {
+    meta.setAttribute('content', mode === 'light' ? '#f4f1ea' : '#0b1020');
+  }
+}
+
+function persistTheme(mode: ThemeMode) {
+  try {
+    localStorage.setItem(STORAGE_KEY, mode);
+  } catch {
+    /* ignore */
+  }
 }
 
 interface ThemeContextValue {
@@ -50,16 +62,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return readStored() ?? systemTheme();
   });
 
+  // Apply to document whenever theme state changes (no forced persist)
   useEffect(() => {
     applyDomTheme(theme);
-    try {
-      localStorage.setItem(STORAGE_KEY, theme);
-    } catch {
-      /* ignore */
-    }
   }, [theme]);
 
-  // Follow system only when user has not chosen yet — we always persist after first paint
+  // Follow OS preference only when the user has not chosen explicitly
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: light)');
     const onChange = () => {
@@ -72,11 +80,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setTheme = useCallback((mode: ThemeMode) => {
+    persistTheme(mode);
     setThemeState(mode);
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    setThemeState((prev) => {
+      const next: ThemeMode = prev === 'dark' ? 'light' : 'dark';
+      persistTheme(next);
+      return next;
+    });
   }, []);
 
   const value = useMemo(

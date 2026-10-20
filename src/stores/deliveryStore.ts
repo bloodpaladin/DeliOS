@@ -368,8 +368,20 @@ export const useDeliveryStore = create<DeliveryState>((set, get) => ({
   setActiveStop: (stopId) => set({ activeStopId: stopId }),
 
   markStatus: async (stopId, status, opts) => {
-    const { run, stops } = get();
+    const { run, stops, isPersisting } = get();
     if (!run) return;
+
+    const current = stops.find((s) => s.id === stopId);
+    // Already in a terminal success state — skip duplicate completion writes
+    if (
+      current &&
+      (current.delivery_status === 'delivered' ||
+        current.delivery_status === 'cancelled') &&
+      (status === 'delivered' || status === 'cancelled')
+    ) {
+      return;
+    }
+    if (isPersisting) return;
 
     set({ isPersisting: true, error: null });
     const idempotencyKey = `status-${stopId}-${status}-${opts?.idempotencySuffix ?? 'v1'}`;
