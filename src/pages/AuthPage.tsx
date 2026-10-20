@@ -6,6 +6,7 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { safeRedirectPath } from '../auth/safeRedirect';
 import { BackButton } from '../components/BackButton';
+import { evaluatePasswordStrength } from '../auth/passwordStrength';
 
 type Mode = 'sign-in' | 'sign-up';
 
@@ -22,6 +23,10 @@ export function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const strength = evaluatePasswordStrength(password);
+  const passwordsMatch =
+    confirm.length > 0 && password.length > 0 && password === confirm;
 
   if (status === 'loading') {
     return (
@@ -169,7 +174,41 @@ export function AuthPage() {
                 placeholder="At least 6 characters"
                 required
                 minLength={6}
+                aria-describedby={password ? 'password-strength' : undefined}
               />
+              {password.length > 0 && (
+                <div
+                  id="password-strength"
+                  className="pwd-strength"
+                  aria-live="polite"
+                >
+                  <div className="pwd-strength-bars" aria-hidden="true">
+                    {[0, 1, 2, 3].map((i) => (
+                      <span
+                        key={i}
+                        className={
+                          'pwd-strength-bar' +
+                          (i < strength.score
+                            ? ` pwd-strength-bar-${strength.score}`
+                            : '')
+                        }
+                      />
+                    ))}
+                  </div>
+                  <div className="pwd-strength-meta">
+                    <span
+                      className={`pwd-strength-label pwd-strength-label-${strength.score}`}
+                    >
+                      {strength.label}
+                    </span>
+                    {mode === 'sign-up' && strength.tips.length > 0 && (
+                      <span className="pwd-strength-tip">
+                        {strength.tips[0]}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </label>
 
             {mode === 'sign-up' && (
@@ -186,6 +225,17 @@ export function AuthPage() {
                   required
                   minLength={6}
                 />
+                {confirm.length > 0 && (
+                  <span
+                    className={
+                      passwordsMatch
+                        ? 'pwd-match pwd-match-ok'
+                        : 'pwd-match pwd-match-bad'
+                    }
+                  >
+                    {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
+                  </span>
+                )}
               </label>
             )}
 

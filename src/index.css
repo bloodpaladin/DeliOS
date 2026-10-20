@@ -329,3 +329,50 @@ a {
     font-size: 16px;
   }
 }
+
+/* —— Password strength —— */
+.pwd-strength {
+  margin-top: 0.45rem;
+}
+.pwd-strength-bars {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+.pwd-strength-bar {
+  height: 0.35rem;
+  border-radius: 999px;
+  background: #334155;
+  transition: background 0.15s ease;
+}
+.pwd-strength-bar-1 { background: #ef4444; }
+.pwd-strength-bar-2 { background: #f59e0b; }
+.pwd-strength-bar-3 { background: #84cc16; }
+.pwd-strength-bar-4 { background: #10b981; }
+.pwd-strength-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+.pwd-strength-label {
+  font-weight: 600;
+}
+.pwd-strength-label-0,
+.pwd-strength-label-1 { color: #f87171; }
+.pwd-strength-label-2 { color: #fbbf24; }
+.pwd-strength-label-3 { color: #a3e635; }
+.pwd-strength-label-4 { color: #34d399; }
+.pwd-strength-tip {
+  color: #94a3b8;
+}
+.pwd-match {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.pwd-match-ok { color: #34d399; }
+.pwd-match-bad { color: #f87171; }
