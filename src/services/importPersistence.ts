@@ -45,7 +45,7 @@ export async function persistImport(
     throw new Error('Must be signed in to save a delivery run');
   }
 
-  // 1. Ensure delivery_run
+  // 1. Ensure delivery_run (create or verify ownership of existing)
   let runId = input.runId;
   if (!runId) {
     const { data: run, error } = await supabase
@@ -65,6 +65,24 @@ export async function persistImport(
       throw new Error(`Failed to create delivery run: ${error?.message}`);
     }
     runId = run.id;
+  } else {
+    // Explicit ownership check; RLS should also block, but surface a clear error
+    const { data: existing, error: ownErr } = await supabase
+      .from('delivery_runs')
+      .select('id, user_id')
+      .eq('id', runId)
+      .maybeSingle();
+    if (ownErr) {
+      throw new Error(`Could not verify delivery run: ${ownErr.message}`);
+    }
+    if (!existing) {
+      throw new Error(
+        'Delivery run not found or you do not have access to it. Refusing to attach stops to another driver\'s run.'
+      );
+    }
+    if (existing.user_id && existing.user_id !== user.id) {
+      throw new Error('This delivery run belongs to another account.');
+    }
   }
 
   // 2. Ensure route_sheet_import record + upload images
@@ -111,7 +129,24 @@ export async function persistImport(
     }
     importId = imp.id;
   } else {
-    await supabase
+    // Update only if this import is owned by the current user (RLS + explicit error)
+    const { data: existingImp, error: impOwnErr } = await supabase
+      .from('route_sheet_imports')
+      .select('id, user_id')
+      .eq('id', importId)
+      .maybeSingle();
+    if (impOwnErr) {
+      throw new Error(`Could not verify route sheet import: ${impOwnErr.message}`);
+    }
+    if (!existingImp) {
+      throw new Error(
+        'Route sheet import not found or not accessible. Refusing to overwrite another user\'s import.'
+      );
+    }
+    if (existingImp.user_id && existingImp.user_id !== user.id) {
+      throw new Error('This route sheet import belongs to another account.');
+    }
+    const { error: updErr } = await supabase
       .from('route_sheet_imports')
       .update({
         processing_status: 'completed',
@@ -119,7 +154,11 @@ export async function persistImport(
         review_status: 'reviewed',
         processed_at: new Date().toISOString(),
       })
-      .eq('id', importId);
+      .eq('id', importId)
+      .eq('user_id', user.id);
+    if (updErr) {
+      throw new Error(`Failed to update route sheet import: ${updErr.message}`);
+    }
   }
 
   // 3. Active rows only (needs_delivery)
